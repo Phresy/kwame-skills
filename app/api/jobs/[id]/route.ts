@@ -46,7 +46,6 @@ export async function PUT(
 
     const user = db.users.findByEmail(session.user.email);
     
-    // Check if user owns the job
     if (job.posterId !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -88,7 +87,6 @@ export async function DELETE(
 
     const user = db.users.findByEmail(session.user.email);
     
-    // Check if user owns the job
     if (job.posterId !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
