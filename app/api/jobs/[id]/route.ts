@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 
 // GET - Fetch single job
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const job = db.jobs.findById(params.id);
+    const { id } = await params;
+    const job = db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -26,8 +27,8 @@ export async function GET(
 
 // PUT - Update job
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -36,7 +37,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const job = db.jobs.findById(params.id);
+    const { id } = await params;
+    const job = db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -50,7 +52,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const updatedJob = db.jobs.update(params.id, {
+    const updatedJob = db.jobs.update(id, {
       ...body,
       updatedAt: new Date().toISOString(),
     });
@@ -67,8 +69,8 @@ export async function PUT(
 
 // DELETE - Delete job
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -77,7 +79,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const job = db.jobs.findById(params.id);
+    const { id } = await params;
+    const job = db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -90,7 +93,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    db.jobs.delete(params.id);
+    db.jobs.delete(id);
 
     return NextResponse.json({ message: "Job deleted successfully" });
   } catch (error) {
