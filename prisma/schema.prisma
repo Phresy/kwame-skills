@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  location      String?
+  avatar        String?
+  role          Role      @default(CLIENT)
+  skills        Skill[]
+  jobs          Job[]     @relation("JobPoster")
+  applications  Application[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    Category
+  hourlyRate  Float?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Job {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    Category
+  budget      Float
+  location    String?
+  isRemote    Boolean     @default(false)
+  status      JobStatus   @default(OPEN)
+  posterId    String
+  poster      User        @relation("JobPoster", fields: [posterId], references: [id])
+  applications Application[]
+  createdAt   DateTime    @default(now())
+  deadline    DateTime
+}
+
+model Application {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  skillerId   String
+  skiller     User      @relation(fields: [skillerId], references: [id])
+  proposal    String    // Removed @db.Text - SQLite handles strings natively
+  bidAmount   Float
+  status      AppStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+}
+
+enum Role {
+  CLIENT
+  SKILLER
+  BOTH
+}
+
+enum Category {
+  PLUMBING
+  ELECTRICAL
+  CARPENTRY
+  PAINTING
+  CLEANING
+  TUTORING
+  WEB_DEV
+  GRAPHIC_DESIGN
+  WRITING
+  PHOTOGRAPHY
+  HAIR_STYLING
+  DRIVING
+  FITNESS
+  OTHER
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AppStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
