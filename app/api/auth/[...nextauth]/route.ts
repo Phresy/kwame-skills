@@ -1,9 +1,9 @@
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -12,31 +12,35 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
-        }
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
 
-        // ✅ ADD AWAIT HERE
-        const user = await db.users.findByEmail(credentials.email);
-        
-        if (!user) {
-          throw new Error("User not found");
-        }
+          const user = await db.users.findByEmail(credentials.email);
+          
+          if (!user) {
+            return null;
+          }
 
-        const passwordMatch = await bcrypt.compare(credentials.password, user.password);
-        
-        if (!passwordMatch) {
-          throw new Error("Invalid password");
-        }
+          const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+          
+          if (!passwordMatch) {
+            return null;
+          }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone,
-          location: user.location,
-        };
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            phone: user.phone,
+            location: user.location,
+          };
+        } catch (error) {
+          console.error("Authorize error:", error);
+          return null;
+        }
       },
     }),
   ],
@@ -65,10 +69,11 @@ const handler = NextAuth({
     error: "/login",
   },
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
