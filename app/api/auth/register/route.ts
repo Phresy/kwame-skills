@@ -14,7 +14,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingUser = db.users.findByEmail(email);
+    // ✅ ADD AWAIT HERE
+    const existingUser = await db.users.findByEmail(email);
     if (existingUser) {
       return NextResponse.json(
         { error: "User already exists" },
@@ -43,7 +44,8 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    const newUser = db.users.create(user);
+    // ✅ ADD AWAIT HERE
+    const newUser = await db.users.create(user);
     const { password: _, ...userWithoutPassword } = newUser;
 
     return NextResponse.json(

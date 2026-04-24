@@ -18,15 +18,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 });
     }
 
-    const currentUser = db.users.findByEmail(session.user.email);
-    const messages = db.messages.findByConversation(currentUser.id, userId);
+    const currentUser = await db.users.findByEmail(session.user.email);
+    const messages = await db.messages.findByConversation(currentUser.id, userId);
     
     // Mark messages as read
-    messages.forEach((msg: any) => {
+    for (const msg of messages) {
       if (msg.toId === currentUser.id && !msg.read) {
-        db.messages.markAsRead(msg.id);
+        await db.messages.markAsRead(msg.id);
       }
-    });
+    }
     
     return NextResponse.json(messages);
   } catch (error) {

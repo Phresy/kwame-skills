@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const job = db.jobs.findById(id);
+    const job = await db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -38,20 +38,20 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const job = db.jobs.findById(id);
+    const job = await db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (job.posterId !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
-    const updatedJob = db.jobs.update(id, {
+    const updatedJob = await db.jobs.update(id, {
       ...body,
       updatedAt: new Date().toISOString(),
     });
@@ -79,19 +79,19 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const job = db.jobs.findById(id);
+    const job = await db.jobs.findById(id);
     
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (job.posterId !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    db.jobs.delete(id);
+    await db.jobs.delete(id);
 
     return NextResponse.json({ message: "Job deleted successfully" });
   } catch (error) {

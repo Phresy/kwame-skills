@@ -16,7 +16,8 @@ const handler = NextAuth({
           throw new Error("Invalid credentials");
         }
 
-        const user = db.users.findByEmail(credentials.email);
+        // ✅ ADD AWAIT HERE
+        const user = await db.users.findByEmail(credentials.email);
         
         if (!user) {
           throw new Error("User not found");
