@@ -22,17 +22,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = db.users.findByEmail(session.user.email);
-    const job = db.jobs.findById(jobId);
+    const user = await db.users.findByEmail(session.user.email);
+    const job = await db.jobs.findById(jobId);
 
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    // Check if already applied
-    const existingApplication = db.applications
-      .findAll()
-      .find((app: any) => app.jobId === jobId && app.skillerId === user?.id);
+    // Check if already applied - FIXED
+    const allApplications = await db.applications.findAll();
+    const existingApplication = allApplications.find(
+      (app: any) => app.jobId === jobId && app.skillerId === user?.id
+    );
 
     if (existingApplication) {
       return NextResponse.json(
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const createdApplication = db.applications.create(newApplication);
+    const createdApplication = await db.applications.create(newApplication);
     
     return NextResponse.json(createdApplication, { status: 201 });
   } catch (error) {
@@ -77,31 +78,33 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const jobId = searchParams.get("jobId");
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
-    let applications = db.applications.findAll();
+    let allApplications = await db.applications.findAll();
 
     // Filter applications
     if (jobId) {
-      applications = applications.filter((app: any) => app.jobId === jobId);
+      allApplications = allApplications.filter((app: any) => app.jobId === jobId);
     } else {
       // Get applications where user is either the job poster or the skiller
-      const userJobs = db.jobs.findAll().filter((job: any) => job.posterId === user?.id);
+      const userJobs = await db.jobs.findByPoster(user?.id);
       const userJobIds = userJobs.map((job: any) => job.id);
       
-      applications = applications.filter(
+      allApplications = allApplications.filter(
         (app: any) => app.skillerId === user?.id || userJobIds.includes(app.jobId)
       );
     }
 
     // Enrich with job details
-    const enrichedApplications = applications.map((app: any) => {
-      const job = db.jobs.findById(app.jobId);
-      return {
-        ...app,
-        job,
-      };
-    });
+    const enrichedApplications = await Promise.all(
+      allApplications.map(async (app: any) => {
+        const job = await db.jobs.findById(app.jobId);
+        return {
+          ...app,
+          job,
+        };
+      })
+    );
 
     return NextResponse.json(enrichedApplications);
   } catch (error) {
