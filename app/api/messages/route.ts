@@ -18,7 +18,6 @@ export async function GET(request: Request) {
     // Get unique conversations
     const conversations = new Map();
     for (const msg of messages) {
-      // FIX: Use snake_case (from_id, to_id)
       const otherId = msg.from_id === user.id ? msg.to_id : msg.from_id;
       if (!conversations.has(otherId)) {
         const otherUser = await db.users.findById(otherId);
@@ -26,8 +25,8 @@ export async function GET(request: Request) {
           userId: otherId,
           userName: otherUser?.name,
           lastMessage: msg.content,
-          lastMessageTime: msg.created_at,  // FIX: Use created_at
-          unread: msg.to_id === user.id && !msg.read  // FIX: Use to_id
+          lastMessageTime: msg.created_at,
+          unread: msg.to_id === user.id && !msg.read
         });
       }
     }
@@ -51,14 +50,13 @@ export async function POST(request: Request) {
     const { toId, content } = await request.json();
     const fromUser = await db.users.findByEmail(session.user.email);
     
-    // FIX: Use snake_case to match database schema
     const message = {
       id: randomBytes(16).toString("hex"),
-      from_id: fromUser.id,                    // Changed from fromId
-      to_id: toId,                             // Changed from toId
+      from_id: fromUser.id,
+      to_id: toId,
       content: content,
       read: false,
-      created_at: new Date().toISOString()     // Changed from createdAt
+      created_at: new Date().toISOString()
     };
     
     const newMessage = await db.messages.create(message);
