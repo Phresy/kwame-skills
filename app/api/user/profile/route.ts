@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -42,22 +42,22 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, phone, location, bio, skills, hourlyRate, yearsOfExperience } = body;
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Update user
-    const updatedUser = db.users.update(user.id, {
+    // Update user - FIX: Use snake_case for database fields
+    const updatedUser = await db.users.update(user.id, {
       name: name || user.name,
       phone: phone || user.phone,
       location: location || user.location,
       bio: bio || user.bio,
       skills: skills || user.skills,
-      hourlyRate: hourlyRate || user.hourlyRate,
-      yearsOfExperience: yearsOfExperience || user.yearsOfExperience,
-      updatedAt: new Date().toISOString(),
+      hourly_rate: hourlyRate || user.hourly_rate,  // Changed from hourlyRate
+      years_of_experience: yearsOfExperience || user.years_of_experience,  // Changed from yearsOfExperience
+      updated_at: new Date().toISOString(),  // Changed from updatedAt
     });
 
     const { password, ...userWithoutPassword } = updatedUser;
