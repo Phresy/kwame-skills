@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const location = searchParams.get("location");
     const status = searchParams.get("status");
 
-    let jobs = db.jobs.findAll();
+    let jobs = await db.jobs.findAll();
 
     // Apply filters
     if (category && category !== "All") {
@@ -28,9 +28,9 @@ export async function GET(request: Request) {
       jobs = jobs.filter((job: any) => job.status === status);
     }
 
-    // Sort by newest first
+    // FIX: Use created_at instead of createdAt (snake_case)
     jobs.sort((a: any, b: any) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
     return NextResponse.json(jobs);
@@ -63,12 +63,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // FIX: Use snake_case to match database schema
     const newJob = {
       id: randomBytes(16).toString("hex"),
       title,
@@ -77,16 +78,15 @@ export async function POST(request: Request) {
       budget: parseFloat(budget),
       location,
       deadline: deadline || null,
-      posterId: user.id,
-      posterName: user.name,
-      posterEmail: user.email,
+      poster_id: user.id,           // Changed from posterId
+      poster_name: user.name,       // Changed from posterName
+      poster_email: user.email,     // Changed from posterEmail
       status: "OPEN",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      applications: [],
+      created_at: new Date().toISOString(),  // Changed from createdAt
+      updated_at: new Date().toISOString(),  // Changed from updatedAt
     };
 
-    const createdJob = db.jobs.create(newJob);
+    const createdJob = await db.jobs.create(newJob);
     
     return NextResponse.json(createdJob, { status: 201 });
   } catch (error) {

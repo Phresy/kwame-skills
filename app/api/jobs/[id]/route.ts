@@ -46,14 +46,15 @@ export async function PUT(
 
     const user = await db.users.findByEmail(session.user.email);
     
-    if (job.posterId !== user?.id) {
+    // FIX: Use poster_id instead of posterId
+    if (job.poster_id !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
     const updatedJob = await db.jobs.update(id, {
       ...body,
-      updatedAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(), // FIX: Use updated_at
     });
 
     return NextResponse.json(updatedJob);
@@ -87,7 +88,8 @@ export async function DELETE(
 
     const user = await db.users.findByEmail(session.user.email);
     
-    if (job.posterId !== user?.id) {
+    // FIX: Use poster_id instead of posterId
+    if (job.poster_id !== user?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

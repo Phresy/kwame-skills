@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const category = searchParams.get("category");
     const userId = searchParams.get("userId");
 
-    let skills = db.skills.findAll();
+    let skills = await db.skills.findAll();
 
     // Apply filters
     if (category && category !== "All") {
@@ -18,17 +18,19 @@ export async function GET(request: Request) {
     }
     
     if (userId) {
-      skills = skills.filter((skill: any) => skill.userId === userId);
+      // FIX: Use user_id instead of userId
+      skills = skills.filter((skill: any) => skill.user_id === userId);
     }
 
     // Get user details for each skill
-    const skillsWithUsers = skills.map((skill: any) => {
-      const user = db.users.findById(skill.userId);
+    const skillsWithUsers = await Promise.all(skills.map(async (skill: any) => {
+      // FIX: Use user_id instead of userId
+      const user = await db.users.findById(skill.user_id);
       return {
         ...skill,
         user: user ? { name: user.name, location: user.location, rating: user.rating } : null,
       };
-    });
+    }));
 
     return NextResponse.json(skillsWithUsers);
   } catch (error) {
@@ -60,29 +62,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = db.users.findByEmail(session.user.email);
+    const user = await db.users.findByEmail(session.user.email);
     
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // FIX: Use snake_case to match database schema
     const newSkill = {
       id: randomBytes(16).toString("hex"),
       title,
       category,
       description,
-      hourlyRate: parseFloat(hourlyRate),
+      hourly_rate: parseFloat(hourlyRate),      // Changed from hourlyRate
       experience: experience || "",
       availability: availability || "Full-time",
-      userId: user.id,
-      userName: user.name,
-      userLocation: user.location,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      user_id: user.id,                         // Changed from userId
+      user_name: user.name,                     // Changed from userName
+      user_location: user.location,             // Changed from userLocation
+      is_active: true,                          // Changed from isActive
+      created_at: new Date().toISOString(),     // Changed from createdAt
+      updated_at: new Date().toISOString(),     // Changed from updatedAt
     };
 
-    const createdSkill = db.skills.create(newSkill);
+    const createdSkill = await db.skills.create(newSkill);
     
     return NextResponse.json(createdSkill, { status: 201 });
   } catch (error) {
