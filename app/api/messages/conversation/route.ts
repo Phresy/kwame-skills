@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 
-// GET - Get conversation between two users
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession();
@@ -23,7 +22,8 @@ export async function GET(request: NextRequest) {
     
     // Mark messages as read
     for (const msg of messages) {
-      if (msg.toId === currentUser.id && !msg.read) {
+      // FIX: Use to_id instead of toId
+      if (msg.to_id === currentUser.id && !msg.read) {
         await db.messages.markAsRead(msg.id);
       }
     }
