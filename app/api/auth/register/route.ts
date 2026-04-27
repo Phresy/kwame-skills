@@ -14,7 +14,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ ADD AWAIT HERE
     const existingUser = await db.users.findByEmail(email);
     if (existingUser) {
       return NextResponse.json(
@@ -25,6 +24,7 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // FIX: Use snake_case to match Supabase column names
     const user = {
       id: randomBytes(16).toString("hex"),
       name,
@@ -36,15 +36,14 @@ export async function POST(req: Request) {
       avatar: null,
       bio: "",
       skills: [],
-      hourlyRate: null,
-      yearsOfExperience: "",
+      hourly_rate: null,
+      years_of_experience: "",
       rating: 0,
-      jobsCompleted: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      jobs_completed: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
-    // ✅ ADD AWAIT HERE
     const newUser = await db.users.create(user);
     const { password: _, ...userWithoutPassword } = newUser;
 

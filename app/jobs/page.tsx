@@ -45,17 +45,26 @@ export default function JobsPage() {
     try {
       const res = await fetch("/api/jobs");
       const data = await res.json();
-      setJobs(data);
+      
+      // Fix: Extract allJobs from the response object
+      if (data && typeof data === 'object') {
+        setJobs(data.allJobs || []);
+      } else if (Array.isArray(data)) {
+        setJobs(data);
+      } else {
+        setJobs([]);
+      }
     } catch (error) {
       console.error("Error fetching jobs:", error);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         job.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All" || job.category === selectedCategory;
     const matchesLocation = selectedLocation === "All" || job.location === selectedLocation;
     return matchesSearch && matchesCategory && matchesLocation;
@@ -158,7 +167,7 @@ export default function JobsPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-blue-600">₵{job.budget.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-blue-600">₵{job.budget?.toLocaleString() || 0}</div>
                             <div className="text-sm text-gray-500">Budget</div>
                           </div>
                         </div>
@@ -169,8 +178,12 @@ export default function JobsPage() {
                           <div className="text-sm text-gray-500">
                             Posted by {job.posterName} • {new Date(job.createdAt).toLocaleDateString()}
                           </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                            {job.status}
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            job.status === "OPEN" 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-700"
+                          }`}>
+                            {job.status || "OPEN"}
                           </span>
                         </div>
                       </div>

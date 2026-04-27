@@ -57,14 +57,11 @@ export default function Dashboard() {
       // Fetch user's skills
       const skillsRes = await fetch(`/api/skills?userId=${session?.user?.id}`);
       const skillsData = await skillsRes.json();
-      setUserSkills(skillsData || []);
-
-      // Fetch applications for user's jobs
-      const appsRes = await fetch("/api/applications");
-      const appsData = await appsRes.json();
-      setApplicationsCount(appsData.length || 0);
+      setUserSkills(Array.isArray(skillsData) ? skillsData : []);
     } catch (error) {
       console.error("Error fetching user data:", error);
+      setUserJobs([]);
+      setUserSkills([]);
     } finally {
       setLoading(false);
     }
@@ -72,10 +69,11 @@ export default function Dashboard() {
 
   const fetchUnreadMessages = async () => {
     try {
-      // Replace with your actual API endpoint for unread messages
       const res = await fetch("/api/messages/unread");
-      const data = await res.json();
-      setUnreadMessages(data.count || 0);
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadMessages(data.count || 0);
+      }
     } catch (error) {
       console.error("Error fetching unread messages:", error);
     }
@@ -98,18 +96,22 @@ export default function Dashboard() {
   const isClient = userRole === "CLIENT" || userRole === "BOTH";
   const isSkiller = userRole === "SKILLER" || userRole === "BOTH";
 
-  // Real stats based on actual data
+  // Safe stats with fallbacks
+  const activeJobsCount = userJobs?.filter(j => j.status === "OPEN").length || 0;
+  const completedJobsCount = userJobs?.filter(j => j.status === "COMPLETED").length || 0;
+  const skillsCount = userSkills?.length || 0;
+
   const stats = [
     { 
       label: "Active Jobs", 
-      value: userJobs.filter(j => j.status === "OPEN").length.toString(), 
+      value: activeJobsCount.toString(), 
       icon: <Briefcase className="w-6 h-6" />, 
       color: "bg-blue-500", 
       show: true 
     },
     { 
       label: "Completed", 
-      value: userJobs.filter(j => j.status === "COMPLETED").length.toString(), 
+      value: completedJobsCount.toString(), 
       icon: <CheckCircle className="w-6 h-6" />, 
       color: "bg-green-500", 
       show: true 
@@ -123,12 +125,14 @@ export default function Dashboard() {
     },
     { 
       label: "My Skills", 
-      value: userSkills.length.toString(), 
+      value: skillsCount.toString(), 
       icon: <Wrench className="w-6 h-6" />, 
       color: "bg-yellow-500", 
       show: isSkiller 
     },
   ];
+
+  const activeJobs = userJobs?.filter(j => j.status === "OPEN") || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,7 +150,7 @@ export default function Dashboard() {
                   <MessageCircle className="w-4 h-4" />
                   <span>Messages</span>
                   {unreadMessages > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {unreadMessages}
                     </span>
                   )}
@@ -181,7 +185,7 @@ export default function Dashboard() {
           className="mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-900">
-            Welcome back, {session.user?.name?.split(' ')[0]}!
+            Welcome back, {session.user?.name?.split(' ')[0] || "User"}!
           </h2>
           <p className="text-gray-600 mt-2">
             {isClient && isSkiller 
@@ -220,7 +224,7 @@ export default function Dashboard() {
             </div>
 
             {/* Active Jobs/Skills Section */}
-            {isClient && userJobs.length > 0 && (
+            {isClient && activeJobs.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -234,7 +238,7 @@ export default function Dashboard() {
                   </Link>
                 </div>
                 <div className="divide-y divide-gray-200">
-                  {userJobs.filter(j => j.status === "OPEN").slice(0, 5).map((job, idx) => (
+                  {activeJobs.slice(0, 5).map((job, idx) => (
                     <motion.div
                       key={job.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -259,17 +263,12 @@ export default function Dashboard() {
                       </div>
                     </motion.div>
                   ))}
-                  {userJobs.filter(j => j.status === "OPEN").length === 0 && (
-                    <div className="px-6 py-8 text-center text-gray-500">
-                      No active jobs. <Link href="/jobs/post" className="text-blue-600 hover:text-blue-700 font-semibold">Post one now</Link>
-                    </div>
-                  )}
                 </div>
               </motion.div>
             )}
 
             {/* Skills Section */}
-            {isSkiller && userSkills.length > 0 && (
+            {isSkiller && skillsCount > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -313,7 +312,7 @@ export default function Dashboard() {
             )}
 
             {/* Empty State */}
-            {isClient && userJobs.length === 0 && isSkiller && userSkills.length === 0 && (
+            {isClient && activeJobs.length === 0 && isSkiller && skillsCount === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -405,7 +404,7 @@ export default function Dashboard() {
 
             {/* Helpful Info Card */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">💡 Tips</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Tips for success</h3>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex gap-2">
                   <span className="text-blue-600 font-semibold">•</span>

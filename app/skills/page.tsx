@@ -42,17 +42,27 @@ export default function SkillsPage() {
     try {
       const res = await fetch("/api/skills");
       const data = await res.json();
-      setSkills(data);
+      
+      // Fix: Handle both array and object responses
+      if (Array.isArray(data)) {
+        setSkills(data);
+      } else if (data && typeof data === 'object') {
+        // If API returns { skills: [] } or similar structure
+        setSkills(data.skills || data.data || []);
+      } else {
+        setSkills([]);
+      }
     } catch (error) {
       console.error("Error fetching skills:", error);
+      setSkills([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredSkills = skills.filter(skill => {
-    const matchesSearch = skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         skill.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = skill.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         skill.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All" || skill.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
