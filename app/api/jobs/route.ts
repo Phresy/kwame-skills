@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       jobs = jobs.filter((job: any) => job.status === status);
     }
 
-    // FIX: Use created_at instead of createdAt (snake_case)
+    // Sort by newest first
     jobs.sort((a: any, b: any) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, category, description, budget, location, deadline } = body;
+    const { title, category, description, budget, location, deadline, phone } = body;
 
     // Validation
     if (!title || !category || !description || !budget || !location) {
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // FIX: Use snake_case to match database schema
+    // Create new job with phone number
     const newJob = {
       id: randomBytes(16).toString("hex"),
       title,
@@ -78,12 +78,13 @@ export async function POST(request: Request) {
       budget: parseFloat(budget),
       location,
       deadline: deadline || null,
-      poster_id: user.id,           // Changed from posterId
-      poster_name: user.name,       // Changed from posterName
-      poster_email: user.email,     // Changed from posterEmail
+      poster_id: user.id,
+      poster_name: user.name,
+      poster_email: user.email,
+      poster_phone: phone || "",  // Added phone number
       status: "OPEN",
-      created_at: new Date().toISOString(),  // Changed from createdAt
-      updated_at: new Date().toISOString(),  // Changed from updatedAt
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const createdJob = await db.jobs.create(newJob);

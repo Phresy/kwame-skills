@@ -12,20 +12,29 @@ import {
   XCircle,
   Eye,
   DollarSign,
-  MessageCircle
+  MessageCircle,
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Application {
   id: string;
-  jobId: string;
-  jobTitle: string;
-  skillerId: string;
-  skillerName: string;
+  job_id: string;
+  job_title: string;
+  skiller_id: string;
+  skiller_name: string;
   proposal: string;
-  bidAmount: number;
+  bid_amount: number;
   status: string;
-  createdAt: string;
+  created_at: string;
+  job?: {
+    title: string;
+    location: string;
+  };
+  skiller?: {
+    name: string;
+    email: string;
+  };
 }
 
 export default function ApplicationsPage() {
@@ -60,6 +69,8 @@ export default function ApplicationsPage() {
       if (res.ok) {
         toast.success(`Application ${status.toLowerCase()}`);
         fetchApplications();
+      } else {
+        toast.error("Failed to update application");
       }
     } catch (error) {
       toast.error("Failed to update application");
@@ -88,15 +99,15 @@ export default function ApplicationsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-4 text-center">
+          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-yellow-600">{pendingApplications.length}</div>
             <div className="text-sm text-gray-600">Pending</div>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center">
+          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-green-600">{acceptedApplications.length}</div>
             <div className="text-sm text-gray-600">Accepted</div>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center">
+          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-red-600">{rejectedApplications.length}</div>
             <div className="text-sm text-gray-600">Rejected</div>
           </div>
@@ -121,12 +132,12 @@ export default function ApplicationsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-xl p-6 shadow-sm"
+                className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{app.jobTitle}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{app.job_title}</h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         app.status === "PENDING" ? "bg-yellow-100 text-yellow-700" :
                         app.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
@@ -136,26 +147,26 @@ export default function ApplicationsPage() {
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-3">
                       <span className="flex items-center gap-1">
                         <User className="w-4 h-4" />
-                        {app.skillerName}
+                        {app.skiller_name}
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4" />
-                        ₵{app.bidAmount}
+                        ₵{app.bid_amount}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        {new Date(app.createdAt).toLocaleDateString()}
+                        {new Date(app.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     
                     <p className="text-gray-600 mb-4">{app.proposal}</p>
                     
-                    <div className="flex gap-3">
-                      <Link href={`/dashboard/messages?user=${app.skillerId}`}>
-                        <button className="flex items-center gap-2 px-3 py-1 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition">
+                    <div className="flex flex-wrap gap-3">
+                      <Link href={`/dashboard/messages?user=${app.skiller_id}`}>
+                        <button className="flex items-center gap-2 px-3 py-1.5 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition text-sm">
                           <MessageCircle className="w-4 h-4" />
                           Message
                         </button>
@@ -164,14 +175,14 @@ export default function ApplicationsPage() {
                         <>
                           <button
                             onClick={() => updateApplicationStatus(app.id, "ACCEPTED")}
-                            className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
                           >
                             <CheckCircle className="w-4 h-4" />
                             Accept
                           </button>
                           <button
                             onClick={() => updateApplicationStatus(app.id, "REJECTED")}
-                            className="flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
                           >
                             <XCircle className="w-4 h-4" />
                             Reject

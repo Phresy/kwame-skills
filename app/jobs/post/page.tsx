@@ -23,6 +23,7 @@ export default function PostJobPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const [job, setJob] = useState({
     title: "",
@@ -31,25 +32,39 @@ export default function PostJobPage() {
     budget: "",
     location: "",
     deadline: "",
-    isRemote: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    const res = await fetch("/api/jobs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...job,
-        budget: parseFloat(job.budget),
-        posterId: session?.user?.id,
-      }),
-    });
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: job.title,
+          category: job.category,
+          description: job.description,
+          budget: parseFloat(job.budget),
+          location: job.location,
+          deadline: job.deadline || null,
+        }),
+      });
 
-    if (res.ok) {
-      setSubmitted(true);
-      setTimeout(() => router.push("/dashboard/my-jobs"), 2000);
+      const data = await res.json();
+
+      if (res.ok) {
+        setSubmitted(true);
+        setTimeout(() => router.push("/dashboard/my-jobs"), 2000);
+      } else {
+        alert(data.error || "Failed to post job");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error posting job:", error);
+      alert("Failed to post job. Please try again.");
+      setLoading(false);
     }
   };
 
@@ -63,7 +78,7 @@ export default function PostJobPage() {
         >
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Job Posted Successfully!</h2>
-          <p className="text-gray-600">Redirecting to your dashboard...</p>
+          <p className="text-gray-600">Redirecting to your jobs...</p>
         </motion.div>
       </div>
     );
@@ -182,10 +197,11 @@ export default function PostJobPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <Send className="w-5 h-5" />
-            Post Job
+            {loading ? "Posting..." : "Post Job"}
           </button>
         </form>
       </div>

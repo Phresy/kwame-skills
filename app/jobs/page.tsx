@@ -6,11 +6,7 @@ import { motion } from "framer-motion";
 import { 
   Briefcase, 
   MapPin, 
-  DollarSign, 
-  Clock,
   Search,
-  Filter,
-  Star,
   Calendar
 } from "lucide-react";
 
@@ -22,8 +18,8 @@ interface Job {
   budget: number;
   location: string;
   deadline: string;
-  posterName: string;
-  createdAt: string;
+  poster_name: string;
+  created_at: string;
   status: string;
 }
 
@@ -46,11 +42,11 @@ export default function JobsPage() {
       const res = await fetch("/api/jobs");
       const data = await res.json();
       
-      // Fix: Extract allJobs from the response object
-      if (data && typeof data === 'object') {
-        setJobs(data.allJobs || []);
-      } else if (Array.isArray(data)) {
+      // Handle both response formats
+      if (Array.isArray(data)) {
         setJobs(data);
+      } else if (data && data.allJobs && Array.isArray(data.allJobs)) {
+        setJobs(data.allJobs);
       } else {
         setJobs([]);
       }
@@ -81,13 +77,11 @@ export default function JobsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Find Jobs</h1>
           <p className="text-gray-600 mt-1">Browse available opportunities near you</p>
         </div>
 
-        {/* Search and Filters */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-8">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -123,12 +117,10 @@ export default function JobsPage() {
           </div>
         </div>
 
-        {/* Results Count */}
         <div className="mb-4">
           <p className="text-gray-600">Found {filteredJobs.length} jobs</p>
         </div>
 
-        {/* Jobs Grid */}
         {filteredJobs.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center">
             <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -176,7 +168,7 @@ export default function JobsPage() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-500">
-                            Posted by {job.posterName} • {new Date(job.createdAt).toLocaleDateString()}
+                            Posted by {job.poster_name} • {new Date(job.created_at).toLocaleDateString()}
                           </div>
                           <span className={`px-3 py-1 rounded-full text-sm ${
                             job.status === "OPEN" 
